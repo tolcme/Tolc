@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tolc - Spazio Sicuro per Parlare</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body class="bg-gradient-to-b from-pink-100 via-rose-50 to-white min-h-screen flex flex-col items-center">
+
+  <!-- Header -->
+  <header class="text-center py-10">
+    <h1 class="text-5xl font-bold text-rose-600">Tolc</h1>
+    <p class="text-lg text-gray-700 mt-4 max-w-xl mx-auto">
+      Parla con qualcuno che ti ascolta davvero. Sempre, senza giudizio.
+    </p>
+  </header>
+
+  <!-- Chat UI -->
+  <main class="w-full max-w-2xl px-4">
+    <div id="chat-box" class="bg-white border border-gray-300 rounded-xl p-4 h-96 overflow-y-auto space-y-2 shadow-md"></div>
+
+    <div class="mt-4 flex">
+      <input
+        id="user-input"
+        type="text"
+        placeholder="Scrivi qualcosa..."
+        class="flex-1 border border-gray-300 rounded-l-xl p-3 focus:outline-none"
+      />
+      <button
+        onclick="sendMessage()"
+        class="bg-rose-500 text-white px-6 rounded-r-xl hover:bg-rose-600"
+      >Invia</button>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-10 text-sm text-gray-400">
+    <p>&copy; 2025 Tolc - Uno spazio sicuro per parlare.</p>
+  </footer>
+
+  <script>
+    const chatBox = document.getElementById("chat-box");
+    const inputField = document.getElementById("user-input");
+
+    const systemPrompt = "Sei Tolc, un assistente empatico con competenze psicologiche, specializzato nel supporto di adolescenti. Usi tecniche come CBT, ascolto attivo, validazione e domande aperte. Non fai diagnosi ma accompagni con rispetto e profondità."
+
+    async function sendMessage() {
+      const userText = inputField.value.trim();
+      if (!userText) return;
+
+      appendMessage("Tu", userText);
+      inputField.value = "";
+
+      try {
+        const response = await fetch("https://api-inference.huggingface.co/models/zementalist/llama-3-8B-chat-psychotherapist", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer hf_nRaildiCKxOaBOVeMXLrQENMUhbEXdeSU",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ inputs: `${systemPrompt}\nUtente: ${userText}\nTolc:` })
+        });
+
+        const data = await response.json();
+        const reply = data.generated_text || data.text || fallbackResponse();
+        appendMessage("Tolc", reply);
+      } catch (error) {
+        appendMessage("Tolc", fallbackResponse());
+      }
+    }
+
+    function appendMessage(sender, text) {
+      const msgDiv = document.createElement("div");
+      msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+      msgDiv.className = sender === "Tu" ? "text-right" : "text-left";
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function fallbackResponse() {
+      return "Capisco, a volte trovare le parole non è facile. Ti va di raccontarmi meglio cosa provi?";
+    }
+  </script>
+
+</body>
+</html>
